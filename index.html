@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Vocab Garden v9.7 - Daily Master</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#10b981">
+    
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
+        // --- CẤU HÌNH FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqqyRq1s9Dncq0zck5Bwmca2s-LcjihMU",
+            authDomain: "vocab-25b77.firebaseapp.com",
+            projectId: "vocab-25b77",
+            storageBucket: "vocab-25b77.firebasestorage.app",
+            messagingSenderId: "16170478730",
+            appId: "1:16170478730:web:4963bc0259febe34995173",
+            measurementId: "G-CD0K0JX525"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'vocab-garden-github'; 
+
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.signInAnonymously = signInAnonymously;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.collection = collection;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.deleteDoc = deleteDoc;
+        window.onSnapshot = onSnapshot;
+        window.writeBatch = writeBatch;
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            min-height: 100vh;
+            overscroll-behavior-y: contain;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            transition: background 1.5s ease-in-out;
+        }
+
+        body.mood-gloomy { background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%); }
+        body.mood-sunny { background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .card-shadow { box-shadow: 0 10px 40px -10px rgba(31, 38, 135, 0.1); }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .float-animation { animation: float 3s ease-in-out infinite; }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 6px 16px -4px rgba(16, 185, 129, 0.4);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); transform: scale(1); }
+        }
+        .animate-pulse-green { animation: pulse-green 0.4s ease-out; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
+
+        .nav-active {
+            background: #10b981;
+            color: white !important;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        input, textarea { user-select: text; }
+        .icon-container svg { display: block; }
+        
+        .sync-status {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            font-size: 0.7rem;
+            color: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+    </style>
+</head>
+<body class="mood-gloomy">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+        const getLocalDateStr = (date) => {
+            const offset = date.getTimezoneOffset() * 60000;
+            const localDate = new Date(date.getTime() - offset);
+            return localDate.toISOString().split('T')[0];
+        };
+
+        const levenshtein = (a, b) => {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        };
+
+        const cleanString = (str) => str ? str.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~]/g, "").replace(/\s{2,}/g, " ").replace(/y/g, "i").trim() : "";
+
+        const getVariations = (text) => {
+             const variations = new Set();
+             variations.add(cleanString(text.replace(/[()\[\]]/g, " ")));
+             variations.add(cleanString(text.replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "")));
+             return Array.from(variations).filter(v => v.length > 0);
+        };
+
+        const Icon = ({ name, size = 24, className = "", strokeWidth = 2.5 }) => {
+            const containerRef = useRef(null);
+            useEffect(() => {
+                if (containerRef.current && window.lucide) {
+                    const iconName = name.replace(/([A-Z])/g, "-$1").toLowerCase().replace(/^-/, "");
+                    containerRef.current.innerHTML = `<i data-lucide="${iconName}"></i>`;
+                    window.lucide.createIcons({ attrs: { width: size, height: size, class: className, 'stroke-width': strokeWidth }, nameAttr: 'data-lucide', root: containerRef.current });
+                }
+            }, [name, size, className, strokeWidth]);
+            return <span ref={containerRef} className="icon-container inline-flex items-center justify-center"></span>;
+        };
+
+        const playSound = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                const now = ctx.currentTime;
+                if (type === 'correct') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(523, now); osc.frequency.exponentialRampToValueAtTime(1046, now + 0.1);
+                    gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.9, now + 0.05); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(120, now); osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+                    gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.9, now + 0.05); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                } else if (type === 'level-up') {
+                    osc.type = 'square'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(554, now + 0.1); osc.frequency.setValueAtTime(659, now + 0.2);
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                }
+                osc.start(now); osc.stop(now + 0.5);
+            } catch (e) {}
+        };
+
+        // SRS Intervals: Removed 365, will handle Mastered (7) manually
+        const SRS_INTERVALS = [1, 3, 7, 15, 30, 60, 180]; 
+        const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+        const shuffleArray = (array) => { const s = [...array]; for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } return s; };
+
+        const StreakPath = ({ history, today }) => {
+            const days = 7;
+            const pathData = useMemo(() => {
+                const points = [];
+                for (let i = 0; i < days; i++) {
+                    const x = 6 + (i / (days - 1)) * 88;
+                    const angle = (i / (days - 1)) * Math.PI * 2; 
+                    const y = 50 + Math.sin(angle) * 25; 
+                    points.push({ x, y });
+                }
+                return points;
+            }, []);
+            const svgPath = useMemo(() => pathData.reduce((acc, p, i) => {
+                if (i === 0) return `M ${p.x} ${p.y}`;
+                const prev = pathData[i-1]; const cp1x = prev.x + (p.x - prev.x) / 2; const cp1y = prev.y; const cp2x = prev.x + (p.x - prev.x) / 2; const cp2y = p.y;
+                return `${acc} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p.x} ${p.y}`;
+            }, ""), [pathData]);
+            const daysToDisplay = useMemo(() => {
+                const d = [];
+                for (let i = days - 1; i >= 0; i--) {
+                    const cur = new Date(today); cur.setDate(today.getDate() - i); const dateStr = getLocalDateStr(cur);
+                    d.push({ date: dateStr, count: history[dateStr] || 0, isToday: i === 0 });
+                }
+                return d;
+            }, [history, today]);
+            const getFlowerInfo = (count, isToday) => {
+                if (count === 0) return { icon: isToday ? 'Loader' : 'Circle', color: 'bg-slate-200 text-slate-400', scale: 1, shadow: '' };
+                if (count <= 2) return { icon: 'Sprout', color: 'bg-emerald-100 text-emerald-500', scale: 1.1, shadow: 'shadow-emerald-200' };
+                if (count <= 5) return { icon: 'Flower', color: 'bg-pink-100 text-pink-500', scale: 1.25, shadow: 'shadow-pink-200' };
+                return { icon: 'Sun', color: 'bg-amber-100 text-amber-500', scale: 1.4, shadow: 'shadow-amber-200' };
+            };
+            return (
+                <div className="glass p-6 rounded-[2.5rem] card-shadow border-white/50 relative overflow-hidden min-h-[180px] group">
+                    <div className="absolute top-4 left-6 z-20">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm"><Icon name="Map" size={16} className="text-emerald-600" />Hành trình rừng già</h3>
+                        <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider pl-6">7 ngày qua</div>
+                    </div>
+                    <Icon name="Cloud" className="absolute top-4 right-10 text-white/40 float-animation" size={50} />
+                    <Icon name="Cloud" className="absolute bottom-4 left-20 text-white/30 float-animation" size={30} style={{animationDelay: '1.5s'}} />
+                    <div className="relative w-full h-[120px] mt-8">
+                        <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none"><path d={svgPath} fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="6 4" strokeLinecap="round" /></svg>
+                        {daysToDisplay.map((day, idx) => {
+                            const pos = pathData[idx]; const info = getFlowerInfo(day.count, day.isToday); const displayDate = parseInt(day.date.split('-')[2]);
+                            return (
+                                <div key={idx} className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group/node z-10" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-700 shadow-lg border-2 border-white ${info.color} ${info.shadow}`} style={{ transform: `scale(${info.scale})` }}><Icon name={info.icon} size={16} className={day.isToday && day.count===0 ? "animate-spin" : ""} strokeWidth={2.5} /></div>
+                                    <div className={`text-[10px] font-bold ${day.isToday ? 'text-emerald-600 bg-white/80 px-1.5 rounded-full backdrop-blur-sm' : 'text-slate-400'}`}>{day.isToday ? 'Nay' : displayDate}</div>
+                                    {day.count > 0 && <div className="opacity-0 group-hover/node:opacity-100 absolute -top-8 bg-slate-800 text-white text-[9px] font-bold px-2 py-1 rounded-lg transition-opacity whitespace-nowrap z-30 pointer-events-none">{day.count} bài</div>}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const Leaderboard = ({ data, currentUserId }) => {
+            return (
+                <div className="space-y-4 animate-in fade-in">
+                    <div className="glass rounded-[2rem] p-6 text-center">
+                        <h3 className="font-black text-slate-800 text-lg flex items-center justify-center gap-2 mb-2"><Icon name="Trophy" className="text-amber-500" /> Bảng Vàng</h3>
+                        <p className="text-xs text-slate-500">Cộng đồng những người làm vườn</p>
+                    </div>
+                    <div className="space-y-3 pb-20">
+                        {data.sort((a,b) => b.masteredCount - a.masteredCount).slice(0, 10).map((user, idx) => (
+                            <div key={idx} className={`glass p-4 rounded-2xl flex items-center gap-4 transition-all ${user.userId === currentUserId ? 'border-emerald-400 bg-emerald-50/50 scale-105 shadow-md' : 'border-white/50'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${idx === 0 ? 'bg-amber-100 text-amber-600' : idx === 1 ? 'bg-slate-200 text-slate-600' : idx === 2 ? 'bg-orange-100 text-orange-600' : 'bg-white text-slate-400'}`}>{idx + 1}</div>
+                                <div className="flex-1"><div className="font-bold text-slate-700 flex items-center gap-2">{user.name} {user.userId === currentUserId && <span className="text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full">Bạn</span>}</div><div className="text-[10px] text-slate-400 font-bold uppercase">{user.title}</div></div>
+                                <div className="text-right"><div className="font-black text-emerald-600 text-lg">{user.masteredCount}</div><div className="text-[9px] text-emerald-400 font-bold uppercase">Cổ thụ</div></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [loggedInUser, setLoggedInUser] = useState(localStorage.getItem('garden_username') || '');
+            const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+            const [loginUsername, setLoginUsername] = useState('');
+            const [loginKey, setLoginKey] = useState('');
+            const [loginError, setLoginError] = useState('');
+
+            const [vocabList, setVocabList] = useState([]);
+            const [practiceHistory, setPracticeHistory] = useState({});
+            const [activeTab, setActiveTab] = useState('dashboard');
+            
+            const [gardenerName, setGardenerName] = useState('');
+            const [leaderboardData, setLeaderboardData] = useState([]);
+
+            const [isReviewing, setIsReviewing] = useState(false);
+            const [isFreePractice, setIsFreePractice] = useState(false);
+            const [isLearning, setIsLearning] = useState(false);
+            const [sessionQueue, setSessionQueue] = useState([]);
+            const [currentWordIndex, setCurrentWordIndex] = useState(0);
+            const [userAnswer, setUserAnswer] = useState('');
+            const [hasChecked, setHasChecked] = useState(false);
+            const [isCorrectFeedback, setIsCorrectFeedback] = useState(false);
+            const [waterDrops, setWaterDrops] = useState(5);
+            const [isGameOver, setIsGameOver] = useState(false);
+            const [shake, setShake] = useState(false);
+            
+            const [newTerm, setNewTerm] = useState('');
+            const [newIpa, setNewIpa] = useState('');
+            const [newDef, setNewDef] = useState('');
+            const [addMode, setAddMode] = useState('single');
+            const [bulkInput, setBulkInput] = useState('');
+            const [warehouseError, setWarehouseError] = useState('');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [filterStatus, setFilterStatus] = useState('all');
+
+            const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+            const todayTimestamp = today.getTime();
+            const todayStr = getLocalDateStr(new Date());
+
+            useEffect(() => {
+                const initAuth = async () => {
+                    const auth = window.auth;
+                    window.signInAnonymously(auth).catch(err => {
+                        console.error("Firebase Auth Error:", err);
+                    });
+                };
+                initAuth();
+                window.onAuthStateChanged(window.auth, setUser);
+            }, []);
+
+            // BACKGROUND MOOD FIX
+            useEffect(() => {
+                const hasStudied = (practiceHistory[todayStr] || 0) > 0;
+                // Nếu đang ôn (isReviewing/isLearning) hoặc đã học -> Nắng
+                const isActive = isReviewing || isLearning;
+                document.body.className = (hasStudied || isActive) ? 'mood-sunny' : 'mood-gloomy';
+            }, [practiceHistory, todayStr, isReviewing, isLearning]);
+
+            useEffect(() => {
+                if (!user) return;
+                let unsubVocab, unsubHistory;
+                if (loggedInUser) {
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'gardens', loggedInUser);
+                    unsubVocab = window.onSnapshot(docRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.vocab) setVocabList(data.vocab);
+                            if (data.history) setPracticeHistory(data.history);
+                            if (data.gardenerName) setGardenerName(data.gardenerName);
+                        } else {
+                            setVocabList([]); setPracticeHistory({});
+                        }
+                    }, (err) => console.log("Sync Read Error:", err));
+                } else {
+                    const historyRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'history');
+                    unsubHistory = window.onSnapshot(historyRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            setPracticeHistory(data.history || {});
+                            if (data.gardenerName) setGardenerName(data.gardenerName);
+                        } else {
+                            setGardenerName(`Khách thăm vườn`);
+                        }
+                    });
+                    const vocabRef = window.collection(window.db, 'artifacts', window.appId, 'users', user.uid, 'vocab');
+                    unsubVocab = window.onSnapshot(vocabRef, (snapshot) => {
+                        const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        setVocabList(words);
+                    });
+                }
+                return () => { if(unsubVocab) unsubVocab(); if(unsubHistory) unsubHistory(); };
+            }, [user, loggedInUser]);
+
+            const saveData = async (newVocab, newHistory) => {
+                if (!user) return;
+                const currentVocab = newVocab || vocabList;
+                const currentHistory = newHistory || practiceHistory;
+                const currentName = gardenerName;
+                const mastered = currentVocab.filter(w => w.status === 'mastered').length;
+                let title = "Người gieo hạt";
+                if (mastered <= 150) title = "Người chăm chồi";
+                if (mastered <= 500) title = "Nghệ nhân vườn";
+                if (mastered > 500) title = "Bậc thầy rừng già";
+                
+                const lbId = loggedInUser || user.uid;
+                const leaderboardRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'leaderboard', lbId);
+                window.setDoc(leaderboardRef, { userId: lbId, name: currentName, masteredCount: mastered, title: title });
+
+                if (loggedInUser) {
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'gardens', loggedInUser);
+                    await window.setDoc(docRef, { vocab: currentVocab, history: currentHistory, gardenerName: currentName }, { merge: true });
+                } else {
+                    const historyRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'history');
+                    window.setDoc(historyRef, { history: currentHistory, gardenerName: currentName }, { merge: true });
+                }
+            };
+
+            const saveSingleWord = (word) => {
+                if(loggedInUser) {
+                    const newList = vocabList.map(w => w.id === word.id ? word : w);
+                    if(!vocabList.find(w => w.id === word.id)) newList.push(word);
+                    saveData(newList, null);
+                } else {
+                    if(!user) return;
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'vocab', word.id);
+                    window.setDoc(docRef, word);
+                }
+            };
+
+            const deleteWord = (id) => {
+                if (confirm("Bạn muốn xóa từ này?")) {
+                    const newList = vocabList.filter(w => w.id !== id);
+                    setVocabList(newList);
+                    if (loggedInUser) {
+                        saveData(newList, null);
+                    } else {
+                        if (!user) return;
+                        const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'vocab', id);
+                        window.deleteDoc(docRef);
+                        saveData(newList, null); 
+                    }
+                }
+            };
+
+            const handleLogin = async () => {
+                if (!loginUsername.trim() || !loginKey.trim()) { setLoginError("Thiếu thông tin"); return; }
+                const safeName = loginUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+                if (safeName.length < 3) { setLoginError("Tên quá ngắn"); return; }
+                const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'gardens', safeName);
+                try {
+                    const snap = await window.getDoc(docRef);
+                    if (snap.exists()) {
+                        if (snap.data().key === loginKey) {
+                            setLoggedInUser(safeName); localStorage.setItem('garden_username', safeName); setIsSyncModalOpen(false);
+                        } else {
+                            setLoginError("Sai mã bảo vệ!");
+                        }
+                    } else {
+                        await window.setDoc(docRef, { key: loginKey, vocab: [], history: {}, gardenerName: loginUsername, created: new Date().toISOString() });
+                        setLoggedInUser(safeName); localStorage.setItem('garden_username', safeName); setIsSyncModalOpen(false);
+                    }
+                } catch (e) { console.error(e); setLoginError("Lỗi kết nối hoặc quyền truy cập."); }
+            };
+
+            const handleLogout = () => {
+                setLoggedInUser(''); localStorage.removeItem('garden_username');
+                setVocabList([]); setPracticeHistory({}); setGardenerName('');
+            };
+
+            useEffect(() => {
+                if (activeTab !== 'leaderboard') return;
+                const leaderboardRef = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'leaderboard');
+                const unsub = window.onSnapshot(leaderboardRef, (snapshot) => {
+                    const data = snapshot.docs.map(doc => doc.data());
+                    setLeaderboardData(data);
+                });
+                return () => unsub();
+            }, [activeTab]);
+
+            const masteredCount = useMemo(() => vocabList.filter(w => w.status === 'mastered').length, [vocabList]);
+            const levelInfo = useMemo(() => {
+                if (masteredCount < 50) return { title: "Người gieo hạt", color: "text-slate-500", icon: "Sprout" };
+                if (masteredCount <= 150) return { title: "Người chăm chồi", color: "text-lime-600", icon: "Leaf" };
+                if (masteredCount <= 500) return { title: "Nghệ nhân vườn", color: "text-emerald-600", icon: "Flower2" };
+                return { title: "Bậc thầy rừng già", color: "text-purple-600", icon: "Trees" };
+            }, [masteredCount]);
+
+            const getPlantIcon = useCallback((word) => {
+                if (word.status === 'queue') return '🌑';
+                const nextReview = new Date(word.nextReviewDate).getTime();
+                if (nextReview <= todayTimestamp && word.status !== 'mastered') return '🥀';
+                if (word.status === 'mastered') return nextReview <= todayTimestamp ? '🌲⚠️' : '🌲';
+                if (word.streak >= 4) return '🌳';
+                if (word.streak >= 1) return '🌿';
+                return '🌱';
+            }, [todayTimestamp]);
+
+            const startPractice = (type) => {
+                let baseQueue = [];
+                if (type === 'review') {
+                    baseQueue = vocabList.filter(w => (w.status === 'learning' || w.status === 'mastered') && new Date(w.nextReviewDate).getTime() <= todayTimestamp);
+                } else if (type === 'free') {
+                    baseQueue = vocabList.filter(w => w.status === 'learning');
+                }
+                if (baseQueue.length > 0) {
+                    const preparedQueue = shuffleArray(baseQueue).map(word => ({ ...word, testType: Math.random() > 0.5 ? 'en-vi' : 'vi-en' }));
+                    setSessionQueue(preparedQueue);
+                    setIsFreePractice(type === 'free');
+                    setIsReviewing(true);
+                    setCurrentWordIndex(0);
+                    setUserAnswer('');
+                    setHasChecked(false);
+                    setWaterDrops(5);
+                    setIsGameOver(false);
+                }
+            };
+
+            const startLearning = () => {
+                const queue = vocabList.filter(w => w.status === 'queue').slice(0, 5);
+                if (queue.length === 0) return;
+                setSessionQueue(queue); 
+                setCurrentWordIndex(0);
+                setIsLearning(true);
+            };
+
+            const checkAnswer = () => {
+                if (hasChecked || isGameOver) return;
+                const currentWord = sessionQueue[currentWordIndex];
+                const userNorm = cleanString(userAnswer);
+                let isCorrect = false;
+                let rawAnswers = currentWord.testType === 'en-vi' ? currentWord.definition.split(/[,;|\/]/) : [currentWord.term];
+                let acceptableAnswers = [];
+                rawAnswers.forEach(raw => acceptableAnswers.push(...getVariations(raw)));
+                isCorrect = acceptableAnswers.some(ans => {
+                    if (ans === userNorm) return true;
+                    const dist = levenshtein(ans, userNorm);
+                    const allowedErrors = ans.length > 8 ? 2 : (ans.length > 3 ? 1 : 0);
+                    return dist <= allowedErrors;
+                });
+                setIsCorrectFeedback(isCorrect);
+                setHasChecked(true);
+                playSound(isCorrect ? 'correct' : 'wrong');
+                if (!isCorrect) {
+                    setShake(true); setTimeout(() => setShake(false), 500);
+                    const newWater = waterDrops - 1;
+                    setWaterDrops(newWater);
+                } else {
+                    confetti({ particleCount: 40, spread: 50, origin: { y: 0.8 }, colors: ['#10b981', '#34d399', '#ffffff'] });
+                }
+            };
+
+            const handleNext = () => {
+                if (waterDrops <= 0 && !isCorrectFeedback) { setIsGameOver(true); return; }
+                const currentWord = sessionQueue[currentWordIndex];
+                let updatedWord = { ...currentWord }; delete updatedWord.testType; 
+
+                if (updatedWord.status === 'mastered') {
+                    if (isCorrectFeedback) {
+                        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0);
+                        updatedWord.nextReviewDate = tomorrow.toISOString();
+                    } else {
+                        updatedWord.status = 'learning'; updatedWord.streak = 0; updatedWord.nextReviewDate = new Date().toISOString();
+                    }
+                } else {
+                    if (isCorrectFeedback) {
+                        const newStreak = updatedWord.streak + 1;
+                        if (newStreak >= 7 && updatedWord.status !== 'mastered') { playSound('level-up'); confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } }); }
+                        // UPDATED: Cổ thụ ôn hàng ngày (1 ngày), còn lại theo SRS
+                        const daysToAdd = newStreak >= 7 ? 1 : (SRS_INTERVALS[newStreak] || 365);
+                        const nextDate = new Date(); nextDate.setDate(nextDate.getDate() + daysToAdd); nextDate.setHours(0, 0, 0, 0);
+                        updatedWord.streak = newStreak; updatedWord.nextReviewDate = nextDate.toISOString(); updatedWord.status = newStreak >= 7 ? 'mastered' : 'learning';
+                    } else {
+                        updatedWord.streak = 0; updatedWord.status = 'learning'; updatedWord.nextReviewDate = new Date().toISOString();
+                    }
+                }
+
+                const newList = vocabList.map(w => w.id === updatedWord.id ? updatedWord : w);
+                setVocabList(newList);
+                saveSingleWord(updatedWord);
+
+                if (currentWordIndex < sessionQueue.length - 1) {
+                    setCurrentWordIndex(prev => prev + 1); setHasChecked(false); setUserAnswer('');
+                } else {
+                    confetti({ particleCount: 200, spread: 160 });
+                    const currentLocalStr = getLocalDateStr(new Date());
+                    const newHistory = { ...practiceHistory, [currentLocalStr]: (practiceHistory[currentLocalStr] || 0) + 1 };
+                    setPracticeHistory(newHistory);
+                    saveData(newList, newHistory);
+                    setIsReviewing(false); setActiveTab('dashboard');
+                }
+            };
+
+            const addNewWord = (e) => {
+                e.preventDefault();
+                const term = newTerm.trim(); const def = newDef.trim();
+                if (!term || !def) return;
+                if (vocabList.some(w => w.term.toLowerCase() === term.toLowerCase())) { setWarehouseError(`Từ "${term}" đã có trong kho!`); setShake(true); setTimeout(() => { setShake(false); setWarehouseError(''); }, 3000); return; }
+                const newWord = { id: generateId(), term, ipa: newIpa.trim(), definition: def, dateAdded: new Date().toISOString(), nextReviewDate: new Date().toISOString(), streak: 0, status: 'queue' };
+                setVocabList(prev => [...prev, newWord]);
+                saveSingleWord(newWord);
+                setNewTerm(''); setNewIpa(''); setNewDef(''); document.getElementById('term-input')?.focus();
+            };
+
+            const deleteWordHandler = (id) => {
+                if (confirm("Bạn muốn xóa từ này?")) {
+                    const newList = vocabList.filter(w => w.id !== id);
+                    setVocabList(newList);
+                    if (loggedInUser) {
+                        saveData(newList, null);
+                    } else {
+                        if (!user) return;
+                        const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'vocab', id);
+                        window.deleteDoc(docRef);
+                        saveData(newList, null); 
+                    }
+                }
+            };
+
+            const handleWarehouseKeyDown = (e, field) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    if (field === 'term') { e.preventDefault(); if (e.key === 'ArrowDown') document.getElementById('def-input')?.focus(); else document.getElementById('ipa-input')?.focus(); }
+                    else if (field === 'ipa') { e.preventDefault(); document.getElementById('def-input')?.focus(); }
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    if (field === 'ipa') { e.preventDefault(); document.getElementById('term-input')?.focus(); }
+                    else if (field === 'def') { e.preventDefault(); if (e.key === 'ArrowUp') document.getElementById('term-input')?.focus(); else document.getElementById('ipa-input')?.focus(); }
+                }
+            };
+
+            const exportData = () => {
+                const data = JSON.stringify({ vocabList, practiceHistory }); const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `garden_backup_v9.json`; a.click();
+            };
+
+            const filteredList = useMemo(() => vocabList.filter(w => {
+                const matchesSearch = w.term.toLowerCase().includes(searchTerm.toLowerCase()) || w.definition.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesFilter = filterStatus === 'all' || w.status === filterStatus;
+                return matchesSearch && matchesFilter;
+            }).reverse(), [vocabList, searchTerm, filterStatus]);
+
+            useEffect(() => {
+                const handleGlobalKeyDown = (e) => {
+                    if (e.key === 'Enter') {
+                        if (isSyncModalOpen) { handleLogin(); return; }
+                        if (isReviewing) { e.preventDefault(); if (!hasChecked) { if (userAnswer.trim()) checkAnswer(); } else { handleNext(); } }
+                        else if (isLearning) { const wordToLearn = sessionQueue[currentWordIndex]; if (wordToLearn) { e.preventDefault(); document.getElementById('btn-learn-next')?.click(); } }
+                    }
+                };
+                window.addEventListener('keydown', handleGlobalKeyDown); return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+            }, [isReviewing, hasChecked, userAnswer, sessionQueue, currentWordIndex, isLearning, isSyncModalOpen, loginUsername, loginKey]);
+
+            return (
+                <div className="max-w-2xl mx-auto px-4 pb-32 pt-6 safe-pt">
+                    <div className="sync-status">
+                        {user ? (loggedInUser ? <span className="text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1"><Icon name="Cloud" size={10} /> {loggedInUser}</span> : <span className="text-slate-400 flex items-center gap-1"><Icon name="User" size={10} /> Khách</span>) : <><Icon name="Loader" size={14} className="animate-spin" /> ...</>}
+                    </div>
+                    
+                    <header className="glass rounded-[2.5rem] p-6 mb-8 card-shadow flex items-center justify-between border-white/50 relative">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 btn-gradient rounded-2xl flex items-center justify-center float-animation"><Icon name={levelInfo.icon} className="text-white" size={28} /></div>
+                            <div>
+                                <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none flex items-center gap-2">
+                                    {gardenerName || "Vườn của bạn"} 
+                                    {!loggedInUser && <Icon name="Edit3" size={12} className="opacity-30 cursor-pointer" onClick={() => { const n = prompt("Tên vườn của bạn:"); if(n) { setGardenerName(n); saveData(null, null); } }} />}
+                                </h1>
+                                <p className={`text-[11px] font-bold uppercase tracking-widest mt-1.5 ${levelInfo.color}`}>{levelInfo.title}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                             {loggedInUser ? (
+                                <button onClick={handleLogout} className="w-10 h-10 rounded-xl glass flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-all active:scale-90" title="Đăng xuất"><Icon name="LogOut" size={20} /></button>
+                             ) : (
+                                <button onClick={() => { setIsSyncModalOpen(true); setLoginError(''); }} className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all active:scale-90" title="Đăng nhập"><Icon name="LogIn" size={20} /></button>
+                             )}
+                             <button onClick={exportData} className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all active:scale-90"><Icon name="DownloadCloud" size={20} /></button>
+                        </div>
+                    </header>
+
+                    {isSyncModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+                            <div className="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95">
+                                <h3 className="font-bold text-xl text-slate-800 mb-2 flex items-center gap-2"><Icon name="Key" className="text-emerald-500" /> Đồng bộ hóa</h3>
+                                <p className="text-sm text-slate-500 mb-6">Nhập Tên đăng nhập & Mã bảo vệ. Dữ liệu sẽ tự động tải về.</p>
+                                <div className="space-y-4">
+                                    <div><label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest ml-1">Tên đăng nhập (viết liền)</label><input value={loginUsername} onChange={e => setLoginUsername(e.target.value)} className="w-full bg-slate-100 p-4 rounded-xl font-bold text-lg outline-none border-2 border-transparent focus:border-emerald-500 focus:bg-white transition-all" placeholder="vd: hello" /></div>
+                                    <div><label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest ml-1">Mã bảo vệ</label><input type="password" value={loginKey} onChange={e => setLoginKey(e.target.value)} className="w-full bg-slate-100 p-4 rounded-xl font-bold text-lg outline-none border-2 border-transparent focus:border-emerald-500 focus:bg-white transition-all" placeholder="******" /></div>
+                                </div>
+                                {loginError && <div className="text-red-500 text-xs font-bold mt-2 bg-red-50 p-2 rounded-lg flex items-center gap-1"><Icon name="AlertCircle" size={12} /> {loginError}</div>}
+                                <div className="mt-6 space-y-2">
+                                    <button onClick={handleLogin} className="w-full btn-gradient text-white py-4 rounded-xl font-bold active:scale-95 transition-transform shadow-lg">Vào Vườn Ngay</button>
+                                    <button onClick={() => setIsSyncModalOpen(false)} className="w-full text-slate-400 py-2 font-bold text-xs hover:text-slate-600">Đóng</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'dashboard' && (
+                        <div className="space-y-8 animate-in fade-in duration-700">
+                            <StreakPath history={practiceHistory} today={today} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={() => startPractice('review')} disabled={vocabList.filter(w => (w.status === 'learning' || w.status === 'mastered') && new Date(w.nextReviewDate).getTime() <= todayTimestamp).length === 0} className="glass card-shadow p-6 rounded-[2.5rem] flex flex-col items-center gap-3 active:scale-95 transition-all disabled:opacity-30 border-white/40 group"><div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-[1.25rem] flex items-center justify-center group-hover:rotate-12 transition-transform"><Icon name="Droplets" size={32} /></div><div className="text-center"><span className="block font-bold text-slate-700">Tưới nước</span><span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{vocabList.filter(w => (w.status === 'learning' || w.status === 'mastered') && new Date(w.nextReviewDate).getTime() <= todayTimestamp).length} cây khô</span></div></button>
+                                <button onClick={startLearning} disabled={vocabList.filter(w => w.status === 'queue').length === 0} className="glass card-shadow p-6 rounded-[2.5rem] flex flex-col items-center gap-3 active:scale-95 transition-all disabled:opacity-30 border-white/40 group"><div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-[1.25rem] flex items-center justify-center group-hover:scale-110 transition-transform"><Icon name="Sprout" size={32} /></div><div className="text-center"><span className="block font-bold text-slate-700">Gieo hạt</span><span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{vocabList.filter(w => w.status === 'queue').length} hạt sẵn</span></div></button>
+                            </div>
+                            <button onClick={() => startPractice('free')} disabled={vocabList.filter(w => w.status === 'learning').length === 0} className="w-full glass card-shadow p-5 rounded-[2rem] flex items-center justify-center gap-3 active:scale-95 transition-all border-white/30 disabled:opacity-40"><Icon name="Zap" size={20} className="text-blue-500" /><span className="font-bold text-slate-600 text-sm uppercase tracking-wide">Luyện tập tự do ({vocabList.filter(w => w.status === 'learning').length})</span></button>
+                            <div className="glass card-shadow rounded-[2.5rem] p-8 border-white/50">
+                                <div className="flex items-center justify-between mb-8"><h3 className="font-extrabold text-slate-800 text-lg flex items-center gap-3"><Icon name="Trees" className="text-emerald-500" /> Khu vườn</h3><div className="flex gap-4"><div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Tổng từ</p><p className="text-lg font-black text-slate-700 leading-none">{vocabList.length}</p></div><div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Cổ thụ</p><p className="text-lg font-black text-purple-600 leading-none">{masteredCount}</p></div></div></div>
+                                {vocabList.length === 0 ? (<div className="py-16 text-center text-slate-400 italic text-sm">Vườn rỗng, hãy thêm hạt giống!</div>) : (<div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">{vocabList.map(word => (<div key={word.id} className="aspect-square glass rounded-[1.25rem] flex items-center justify-center text-2xl hover:scale-125 transition-all cursor-help border-white/60 shadow-sm" title={word.term}>{getPlantIcon(word)}</div>))}</div>)}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'warehouse' && (
+                        <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                            <div className={`glass rounded-[2.5rem] p-7 card-shadow transition-all border-white/60 ${shake ? 'animate-shake border-red-300' : ''}`}>
+                                <div className="flex justify-between items-center mb-6"><h3 className="font-bold text-slate-800 flex items-center gap-2"><Icon name="PlusCircle" className="text-emerald-600" size={20} /> Thêm hạt mới</h3><button onClick={() => setAddMode(addMode === 'single' ? 'bulk' : 'single')} className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">{addMode === 'single' ? 'Dùng Trang tính' : 'Nhập đơn'}</button></div>
+                                {addMode === 'single' ? (
+                                    <form onSubmit={addNewWord} className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4"><div className="space-y-1"><input id="term-input" value={newTerm} onChange={e => {setNewTerm(e.target.value); setWarehouseError('');}} onKeyDown={e => handleWarehouseKeyDown(e, 'term')} className="w-full p-4 bg-white/60 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-700 transition-all" placeholder="Tiếng Anh..." />{warehouseError && <p className="text-[10px] text-red-500 font-bold ml-2 italic">{warehouseError}</p>}</div><input id="ipa-input" value={newIpa} onChange={e => setNewIpa(e.target.value)} onKeyDown={e => handleWarehouseKeyDown(e, 'ipa')} className="w-full p-4 bg-white/60 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-mono text-emerald-600 transition-all" placeholder="IPA..." /></div>
+                                        <input id="def-input" value={newDef} onChange={e => setNewDef(e.target.value)} onKeyDown={e => handleWarehouseKeyDown(e, 'def')} className="w-full p-4 bg-white/60 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold text-slate-700 transition-all" placeholder="Nghĩa tiếng Việt..." /><button type="submit" className="w-full btn-gradient text-white p-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl">Lưu vào kho</button>
+                                    </form>
+                                ) : (
+                                    <div className="space-y-4 animate-in fade-in">
+                                        <p className="text-[11px] text-slate-400 italic bg-white/50 p-4 rounded-2xl border border-dashed border-emerald-200">Dán dữ liệu 3 cột (Anh - IPA - Việt) từ Excel/Sheets vào đây.</p>
+                                        <textarea value={bulkInput} onChange={e => setBulkInput(e.target.value)} rows="6" className="w-full p-4 bg-white/60 rounded-2xl outline-none border-2 border-dashed border-slate-200 focus:border-emerald-500 transition-all" placeholder="English	/ipa/	Vietnamese..."></textarea>
+                                        <button onClick={() => { 
+                                            const lines = bulkInput.split('\n').filter(l => l.trim()); 
+                                            const newWords = []; 
+                                            lines.forEach(line => { 
+                                                const parts = line.split('\t'); 
+                                                const term = parts[0]?.trim(); 
+                                                const ipa = parts.length === 3 ? parts[1]?.trim() : ''; 
+                                                const def = parts.length === 3 ? parts[2]?.trim() : parts[1]?.trim(); 
+                                                if (term && def && !vocabList.find(w => w.term.toLowerCase() === term.toLowerCase())) { 
+                                                    const newWord = { id: generateId(), term, ipa, definition: def, dateAdded: new Date().toISOString(), nextReviewDate: new Date().toISOString(), streak: 0, status: 'queue' }; 
+                                                    newWords.push(newWord); 
+                                                } 
+                                            });
+
+                                            if (newWords.length === 0) return;
+
+                                            const combinedList = [...vocabList, ...newWords];
+                                            setVocabList(combinedList); 
+
+                                            if (loggedInUser) {
+                                                saveData(combinedList, null);
+                                            } else {
+                                                if (user) { 
+                                                    const batch = window.writeBatch(window.db); 
+                                                    newWords.forEach(w => {
+                                                        const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'vocab', w.id); 
+                                                        batch.set(docRef, w); 
+                                                    });
+                                                    batch.commit(); 
+                                                } 
+                                            }
+                                            
+                                            setBulkInput(''); setAddMode('single'); 
+                                        }} className="w-full btn-gradient text-white p-5 rounded-2xl font-black uppercase tracking-widest shadow-xl">Nhập hàng loạt</button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="glass rounded-[2.5rem] p-7 card-shadow border-white/60 min-h-[500px]">
+                                <div className="flex gap-2 mb-6 overflow-x-auto pb-3 no-scrollbar">{[{id:'all',l:'Tất cả'},{id:'queue',l:'Hạt giống'},{id:'learning',l:'Đang lớn'},{id:'mastered',l:'Cổ thụ'}].map(f => (<button key={f.id} onClick={() => setFilterStatus(f.id)} className={`px-5 py-2.5 rounded-full text-[11px] font-black uppercase whitespace-nowrap transition-all ${filterStatus === f.id ? 'nav-active' : 'bg-white/50 text-slate-400 hover:text-emerald-500'}`}>{f.l}</button>))}</div>
+                                <div className="relative mb-6"><Icon name="Search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-white/50 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-medium transition-all shadow-inner" placeholder="Tìm kiếm từ vựng..." /></div>
+                                <div className="space-y-3 max-h-[550px] overflow-y-auto pr-2 no-scrollbar">{filteredList.map(w => (<div key={w.id} className="flex items-center justify-between p-4 glass rounded-[1.5rem] group hover:border-emerald-300 transition-all card-shadow"><div className="flex items-center gap-4"><span className="text-2xl drop-shadow-sm">{getPlantIcon(w)}</span><div><p className="font-bold text-slate-800 text-sm">{w.term} <span className="text-xs font-mono text-emerald-500 ml-1">/{w.ipa}/</span></p><p className="text-xs text-slate-500 font-medium">{w.definition}</p></div></div><button onClick={() => deleteWordHandler(w.id)} className="w-9 h-9 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center"><Icon name="Trash2" size={18} /></button></div>))}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'leaderboard' && <Leaderboard data={leaderboardData} currentUserId={loggedInUser || user?.uid} />}
+
+                    {/* Modals are unchanged from previous version, just re-rendered */}
+                    {isReviewing && sessionQueue[currentWordIndex] && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-in fade-in" onClick={() => setIsReviewing(false)}></div>
+                            <div className={`relative w-full max-w-md glass rounded-[3.5rem] overflow-hidden card-shadow animate-in zoom-in-95 duration-300 ${shake ? 'animate-shake' : ''}`}>
+                                <div className="absolute top-6 left-8 flex gap-1 z-20">{[...Array(5)].map((_, i) => (<span key={i} className={`text-sm transition-all duration-500 ${i < waterDrops ? 'opacity-100 scale-100' : 'opacity-30 grayscale scale-75'}`}>💧</span>))}</div>
+                                <div className={`p-12 text-center text-white relative transition-colors duration-500 ${hasChecked ? (isCorrectFeedback ? 'bg-emerald-500' : 'bg-rose-500') : (isFreePractice ? 'bg-blue-500' : 'bg-amber-500')}`}>
+                                    <button onClick={() => setIsReviewing(false)} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/10 flex items-center justify-center hover:bg-black/20 transition-all"><Icon name="X" size={20} /></button>
+                                    <div className="text-8xl mb-8 float-animation mt-4">{hasChecked ? (isCorrectFeedback ? '✨' : '❌') : (isFreePractice ? '⚡' : '🥀')}</div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-4">{sessionQueue[currentWordIndex].testType === 'en-vi' ? 'Tiếng Anh' : 'Tiếng Việt'}</p>
+                                    <h2 className="text-4xl font-black mb-2 drop-shadow-md">{sessionQueue[currentWordIndex].testType === 'en-vi' ? sessionQueue[currentWordIndex].term : sessionQueue[currentWordIndex].definition}</h2>
+                                    {sessionQueue[currentWordIndex].testType === 'en-vi' && sessionQueue[currentWordIndex].ipa && <p className="font-mono text-lg opacity-80 italic">/{sessionQueue[currentWordIndex].ipa}/</p>}
+                                    <div className="mt-10 w-full bg-black/10 h-2.5 rounded-full overflow-hidden"><div className="bg-white h-full transition-all duration-700 ease-out" style={{ width: `${((currentWordIndex + 1) / sessionQueue.length) * 100}%` }}></div></div>
+                                </div>
+                                <div className="p-10 space-y-8 bg-white/40">
+                                    {isGameOver ? (
+                                        <div className="text-center animate-in zoom-in"><h3 className="text-2xl font-black text-slate-800 mb-2">Cạn nước rồi! 🥀</h3><p className="text-slate-500 text-sm mb-6">Cây cối cần nghỉ ngơi. Hãy thử lại sau nhé.</p><button onClick={() => setIsReviewing(false)} className="w-full bg-slate-800 text-white p-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl">Kết thúc</button></div>
+                                    ) : !hasChecked ? (
+                                        <div className="space-y-5"><input autoFocus type="text" value={userAnswer} onChange={e => setUserAnswer(e.target.value)} className="w-full p-6 glass border-2 border-slate-100 rounded-[2rem] outline-none focus:border-emerald-500 font-bold text-center text-2xl text-slate-700 card-shadow transition-all" placeholder="..." /><button onClick={checkAnswer} disabled={!userAnswer.trim()} className="w-full btn-gradient text-white p-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all animate-pulse-green">Kiểm tra</button></div>
+                                    ) : (
+                                        <div className="space-y-10 animate-in slide-in-from-bottom-6 duration-500 text-center">
+                                            <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Kết quả đúng</p><p className="text-3xl font-black text-slate-800 leading-tight">{sessionQueue[currentWordIndex].testType === 'en-vi' ? sessionQueue[currentWordIndex].definition : sessionQueue[currentWordIndex].term}</p>{sessionQueue[currentWordIndex].ipa && (<p className="text-xl font-mono text-emerald-600 mt-4 font-bold italic drop-shadow-sm">/{sessionQueue[currentWordIndex].ipa}/</p>)}</div>
+                                            <button onClick={handleNext} className="w-full btn-gradient text-white p-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl active:scale-95 flex items-center justify-center gap-3 transition-all">{isCorrectFeedback ? 'Tiếp theo' : 'Đã hiểu'} <Icon name="ArrowRight" size={24} /></button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {isLearning && sessionQueue.length > 0 && sessionQueue[currentWordIndex] && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setIsLearning(false)}></div>
+                            <div className={`relative w-full max-w-md glass rounded-[3.5rem] overflow-hidden card-shadow animate-in zoom-in-95`}>
+                                <div className="bg-emerald-500 p-12 text-center text-white relative">
+                                    <button onClick={() => setIsLearning(false)} className="absolute top-8 right-8 w-10 h-10 rounded-full bg-black/10 flex items-center justify-center"><Icon name="X" size={20} /></button>
+                                    <div className="text-8xl mb-8 float-animation">🌱</div>
+                                    <h2 className="text-4xl font-black uppercase tracking-tight mb-2 drop-shadow-md">{sessionQueue[currentWordIndex].term}</h2>
+                                    <p className="text-lg font-mono opacity-80 italic">/{sessionQueue[currentWordIndex].ipa}/</p>
+                                </div>
+                                <div className="p-12 text-center space-y-10">
+                                    <div><p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-3">Ý nghĩa</p><p className="text-3xl font-black text-slate-800 leading-tight">{sessionQueue[currentWordIndex].definition}</p></div>
+                                    <button id="btn-learn-next" onClick={() => {
+                                        playSound('correct');
+                                        const currentWord = sessionQueue[currentWordIndex];
+                                        const updatedWord = { ...currentWord, status: 'learning', nextReviewDate: new Date(Date.now() + 86400000).toISOString() };
+                                        setVocabList(prev => prev.map(w => w.id === currentWord.id ? updatedWord : w));
+                                        saveSingleWord(updatedWord); 
+                                        if (currentWordIndex < sessionQueue.length - 1) { setCurrentWordIndex(prev => prev + 1); } else { setIsLearning(false); setCurrentWordIndex(0); confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+                                    }} className="w-full btn-gradient text-white p-6 rounded-[2rem] font-black text-xl shadow-xl active:scale-95 flex items-center justify-center gap-3 transition-all">Đã thuộc <Icon name="Check" size={24} /></button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 glass rounded-full p-2.5 flex items-center gap-2 z-40 card-shadow border-white/50">
+                        <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest ${activeTab === 'dashboard' ? 'nav-active' : 'text-slate-400 hover:text-emerald-500'}`}><Icon name="Layout" size={18} /> <span>Vườn</span></button>
+                        <button onClick={() => setActiveTab('warehouse')} className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest ${activeTab === 'warehouse' ? 'nav-active' : 'text-slate-400 hover:text-emerald-500'}`}><Icon name="Book" size={18} /> <span>Kho</span></button>
+                        <button onClick={() => setActiveTab('leaderboard')} className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest ${activeTab === 'leaderboard' ? 'nav-active' : 'text-slate-400 hover:text-emerald-500'}`}><Icon name="Trophy" size={18} /> <span>Cộng đồng</span></button>
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
