@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Vocab Garden v9.7 - Daily Master</title>
+    <title>Vocab Garden v9.8 - Time Fix</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -206,7 +206,7 @@
             } catch (e) {}
         };
 
-        // SRS Intervals: Removed 365, will handle Mastered (7) manually
+        // SRS Intervals: 1, 3, 7... days
         const SRS_INTERVALS = [1, 3, 7, 15, 30, 60, 180]; 
         const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
         const shuffleArray = (array) => { const s = [...array]; for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } return s; };
@@ -323,10 +323,13 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [filterStatus, setFilterStatus] = useState('all');
 
-            const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+            // FIX: Removed useMemo with empty deps to force fresh date on re-renders
+            const today = new Date(); 
+            today.setHours(0, 0, 0, 0);
             const todayTimestamp = today.getTime();
             const todayStr = getLocalDateStr(new Date());
 
+            // --- AUTH INIT ---
             useEffect(() => {
                 const initAuth = async () => {
                     const auth = window.auth;
@@ -338,17 +341,19 @@
                 window.onAuthStateChanged(window.auth, setUser);
             }, []);
 
-            // BACKGROUND MOOD FIX
+            // BACKGROUND MOOD
             useEffect(() => {
                 const hasStudied = (practiceHistory[todayStr] || 0) > 0;
-                // Nếu đang ôn (isReviewing/isLearning) hoặc đã học -> Nắng
                 const isActive = isReviewing || isLearning;
                 document.body.className = (hasStudied || isActive) ? 'mood-sunny' : 'mood-gloomy';
             }, [practiceHistory, todayStr, isReviewing, isLearning]);
 
+            // --- DATA LOADING ---
             useEffect(() => {
                 if (!user) return;
+
                 let unsubVocab, unsubHistory;
+
                 if (loggedInUser) {
                     const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'gardens', loggedInUser);
                     unsubVocab = window.onSnapshot(docRef, (docSnap) => {
@@ -372,20 +377,24 @@
                             setGardenerName(`Khách thăm vườn`);
                         }
                     });
+
                     const vocabRef = window.collection(window.db, 'artifacts', window.appId, 'users', user.uid, 'vocab');
                     unsubVocab = window.onSnapshot(vocabRef, (snapshot) => {
                         const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         setVocabList(words);
                     });
                 }
+
                 return () => { if(unsubVocab) unsubVocab(); if(unsubHistory) unsubHistory(); };
             }, [user, loggedInUser]);
 
+            // --- SAVE LOGIC ---
             const saveData = async (newVocab, newHistory) => {
                 if (!user) return;
                 const currentVocab = newVocab || vocabList;
                 const currentHistory = newHistory || practiceHistory;
                 const currentName = gardenerName;
+
                 const mastered = currentVocab.filter(w => w.status === 'mastered').length;
                 let title = "Người gieo hạt";
                 if (mastered <= 150) title = "Người chăm chồi";
@@ -555,8 +564,8 @@
                     if (isCorrectFeedback) {
                         const newStreak = updatedWord.streak + 1;
                         if (newStreak >= 7 && updatedWord.status !== 'mastered') { playSound('level-up'); confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } }); }
-                        // UPDATED: Cổ thụ ôn hàng ngày (1 ngày), còn lại theo SRS
-                        const daysToAdd = newStreak >= 7 ? 1 : (SRS_INTERVALS[newStreak] || 365);
+                        // FIX: Use index - 1 to start SRS at 1 day for streak 1
+                        const daysToAdd = newStreak >= 7 ? 1 : (SRS_INTERVALS[newStreak - 1] || 365);
                         const nextDate = new Date(); nextDate.setDate(nextDate.getDate() + daysToAdd); nextDate.setHours(0, 0, 0, 0);
                         updatedWord.streak = newStreak; updatedWord.nextReviewDate = nextDate.toISOString(); updatedWord.status = newStreak >= 7 ? 'mastered' : 'learning';
                     } else {
