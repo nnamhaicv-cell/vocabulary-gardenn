@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Vocab Garden v9.8.1 - Tour Fixed</title>
+    <title>Vocab Garden v9.8.2 - Responsive Tour Fixed</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,7 +23,6 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CẤU HÌNH FIREBASE ---
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDqqyRq1s9Dncq0zck5Bwmca2s-LcjihMU",
             authDomain: "vocab-25b77.firebaseapp.com",
@@ -206,7 +205,7 @@
         const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
         const shuffleArray = (array) => { const s = [...array]; for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; } return s; };
 
-        // Component Hướng dẫn Tương tác
+        // Tối ưu TourTooltip cho màn hình nhỏ
         const TourTooltip = ({ title, content, onNext, isLast, position = 'bottom', align = 'center', hideNext = false }) => {
             let posClasses = '';
             let arrowClasses = '';
@@ -231,12 +230,12 @@
             }
 
             return (
-                <div className={`absolute ${posClasses} w-64 bg-slate-800 text-left p-5 rounded-2xl shadow-2xl z-[100] cursor-default animate-in fade-in zoom-in-95`} onClick={e => e.stopPropagation()}>
+                <div className={`absolute ${posClasses} w-[260px] max-w-[85vw] bg-slate-800 text-left p-4 sm:p-5 rounded-2xl shadow-2xl z-[100] cursor-default animate-in fade-in zoom-in-95`} onClick={e => e.stopPropagation()}>
                     <div className={`absolute ${arrowClasses} w-4 h-4 bg-slate-800 rotate-45`}></div>
-                    <h4 className="font-black text-emerald-400 mb-2 text-sm">{title}</h4>
-                    <p className="text-xs text-slate-300 mb-5 leading-relaxed">{content}</p>
+                    <h4 className="font-black text-emerald-400 mb-1.5 text-sm leading-tight">{title}</h4>
+                    <p className={`text-xs text-slate-300 leading-relaxed break-words ${hideNext ? '' : 'mb-4'}`}>{content}</p>
                     {!hideNext && (
-                        <button onClick={(e) => { e.stopPropagation(); onNext(); }} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95">
+                        <button onClick={(e) => { e.stopPropagation(); onNext(); }} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-lg active:scale-95">
                             {isLast ? "Bắt đầu thôi!" : "Tiếp theo"}
                         </button>
                     )}
@@ -361,7 +360,7 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [filterStatus, setFilterStatus] = useState('all');
             
-            // Hệ thống Tour Guide
+            // Hệ thống Tour Guide: Hiện tại là 7 bước
             const [tutorialStep, setTutorialStep] = useState(() => localStorage.getItem('garden_tutorial_done') ? 0 : 1);
 
             const finishTutorial = () => {
@@ -478,7 +477,7 @@
 
             const handleLogin = async () => {
                 if (!user) { setLoginError("Hệ thống chưa kết nối xong, vui lòng chờ trong giây lát!"); return; }
-                if (!loginUsername.trim() || !loginKey.trim()) { setLoginError("Thiếu thông vị trí"); return; }
+                if (!loginUsername.trim() || !loginKey.trim()) { setLoginError("Thiếu thông tin"); return; }
                 const safeName = loginUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
                 if (safeName.length < 3) { setLoginError("Tên quá ngắn"); return; }
                 const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'gardens', safeName);
@@ -494,7 +493,7 @@
                         await window.setDoc(docRef, { key: loginKey, vocab: [], history: {}, gardenerName: loginUsername, created: new Date().toISOString() });
                         setLoggedInUser(safeName); localStorage.setItem('garden_username', safeName); setIsSyncModalOpen(false);
                     }
-                } catch (e) { console.error(e); setLoginError("Lỗi kết nối hoặc quyền truy cập."); }
+                } catch (e) { console.error(e); setLoginError("Lỗi kết nối hoặc quyền truy cập. Bạn đã thêm rule Firestore chưa?"); }
             };
 
             const handleLogout = () => {
@@ -697,7 +696,7 @@
                                  ) : (
                                     <button onClick={() => { setIsSyncModalOpen(true); setLoginError(''); }} className={`w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all active:scale-90`} title="Đăng nhập"><Icon name="LogIn" size={20} /></button>
                                  )}
-                                 {tutorialStep === 1 && <TourTooltip title="🔐 Lưu trữ đám mây" content="Hãy đăng nhập bằng Tên vườn & Mã bảo vệ để lưu dữ liệu. Bây giờ, hãy ghé thăm Kho để nhập từ mới nhé!" onNext={() => { setTutorialStep(2); }} position="bottom" align="right" />}
+                                 {tutorialStep === 1 && <TourTooltip title="🔐 Lưu trữ đám mây" content="Bạn có thể đăng nhập bằng Tên vườn & Mã bảo vệ để lưu dữ liệu an toàn. Bỏ qua nếu muốn lưu trên máy." onNext={() => setTutorialStep(2)} position="bottom" align="right" />}
                              </div>
 
                              <button onClick={exportData} className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all active:scale-90"><Icon name="DownloadCloud" size={20} /></button>
@@ -772,13 +771,13 @@
                                 <button onClick={() => { if(tutorialStep === 0) startLearning(); }} disabled={tutorialStep === 0 && vocabList.filter(w => w.status === 'queue').length === 0} className={`glass card-shadow p-6 rounded-[2.5rem] flex flex-col items-center gap-3 transition-all group ${tutorialStep === 5 ? 'relative z-50 ring-4 ring-emerald-400 bg-white border-transparent scale-105' : 'active:scale-95 border-white/40 disabled:opacity-30'}`}>
                                     <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-[1.25rem] flex items-center justify-center group-hover:scale-110 transition-transform"><Icon name="Sprout" size={32} /></div>
                                     <div className="text-center"><span className="block font-bold text-slate-700">Gieo hạt</span><span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{vocabList.filter(w => w.status === 'queue').length} hạt sẵn</span></div>
-                                    {tutorialStep === 5 && <TourTooltip title="🌱 Gieo hạt" content="Sau khi có hạt giống trong Kho, bấm vào đây để bắt đầu học. Mỗi lần gieo, bạn sẽ học 5 từ mới." onNext={() => setTutorialStep(6)} position="bottom" />}
+                                    {tutorialStep === 5 && <TourTooltip title="🌱 Gieo hạt" content="Sau khi đã thêm hạt giống trong Kho, bạn bấm vào đây để bắt đầu học (mỗi lần 5 từ mới)." onNext={() => setTutorialStep(6)} position="bottom" align="left" />}
                                 </button>
                                 
                                 <button onClick={() => { if(tutorialStep === 0) startPractice('review'); }} disabled={tutorialStep === 0 && vocabList.filter(w => (w.status === 'learning' || w.status === 'mastered') && new Date(w.nextReviewDate).getTime() <= todayTimestamp).length === 0} className={`glass card-shadow p-6 rounded-[2.5rem] flex flex-col items-center gap-3 transition-all group ${tutorialStep === 6 ? 'relative z-50 ring-4 ring-emerald-400 bg-white border-transparent scale-105' : 'active:scale-95 border-white/40 disabled:opacity-30'}`}>
                                     <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-[1.25rem] flex items-center justify-center group-hover:rotate-12 transition-transform"><Icon name="Droplets" size={32} /></div>
                                     <div className="text-center"><span className="block font-bold text-slate-700">Tưới nước</span><span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{vocabList.filter(w => (w.status === 'learning' || w.status === 'mastered') && new Date(w.nextReviewDate).getTime() <= todayTimestamp).length} cây khô</span></div>
-                                    {tutorialStep === 6 && <TourTooltip title="🚿 Tưới nước" content="Tưới những cây đang khát (Ôn tập). Hệ thống sẽ tự gọi bạn tưới nước dựa trên tiến độ quên từ của bạn." onNext={() => setTutorialStep(7)} position="bottom" />}
+                                    {tutorialStep === 6 && <TourTooltip title="🚿 Tưới nước" content="Dùng để ôn tập. Hệ thống sẽ tự gọi bạn tưới nước những cây đang khát dựa trên độ rơi rụng trí nhớ của bạn." onNext={() => setTutorialStep(7)} position="bottom" align="right" />}
                                 </button>
                             </div>
                             
@@ -787,7 +786,7 @@
                             <div className={`glass card-shadow rounded-[2.5rem] p-8 transition-all duration-300 ${tutorialStep === 7 ? 'relative z-50 ring-4 ring-emerald-400 bg-white border-transparent scale-[1.02]' : 'border-white/50'}`}>
                                 <div className="flex items-center justify-between mb-8 relative">
                                     <h3 className="font-extrabold text-slate-800 text-lg flex items-center gap-3"><Icon name="Trees" className="text-emerald-500" /> Khu vườn</h3>
-                                    {tutorialStep === 7 && <TourTooltip title="🌲 Cổ thụ" content="Khi bạn tưới nước đúng 7 lần liên tiếp, mầm non sẽ hóa Cổ thụ cắm rễ sâu vào trí nhớ." onNext={finishTutorial} isLast={true} position="top" />}
+                                    {tutorialStep === 7 && <TourTooltip title="🌲 Cổ thụ" content="Khi bạn tưới nước đúng 7 lần liên tiếp, mầm non sẽ hóa Cổ thụ và cắm rễ thật sâu vào trí nhớ. Kết thúc Tour nhé!" onNext={finishTutorial} isLast={true} position="top" align="center" />}
                                     <div className="flex gap-4"><div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Tổng từ</p><p className="text-lg font-black text-slate-700 leading-none">{vocabList.length}</p></div><div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Cổ thụ</p><p className="text-lg font-black text-purple-600 leading-none">{masteredCount}</p></div></div>
                                 </div>
                                 {vocabList.length === 0 ? (<div className="py-16 text-center text-slate-400 italic text-sm">Vườn rỗng, hãy thêm hạt giống!</div>) : (<div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">{vocabList.map(word => (<div key={word.id} className="aspect-square glass rounded-[1.25rem] flex items-center justify-center text-2xl hover:scale-125 transition-all cursor-help border-white/60 shadow-sm" title={word.term}>{getPlantIcon(word)}</div>))}</div>)}
@@ -801,7 +800,7 @@
                                 <div className="flex justify-between items-center mb-6 relative">
                                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><Icon name="PlusCircle" className="text-emerald-600" size={20} /> Thêm hạt mới</h3>
                                     <button onClick={() => setAddMode(addMode === 'single' ? 'bulk' : 'single')} className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">{addMode === 'single' ? 'Dùng Trang tính' : 'Nhập đơn'}</button>
-                                    {tutorialStep === 3 && <TourTooltip title="➕ Nhập từ mới" content="Nhập tay từng từ hoặc dán từ Excel/Google Sheets vào đây. Thêm xong thì chúng ta quay lại Vườn nhé!" onNext={() => { setTutorialStep(4); }} position="bottom" />}
+                                    {tutorialStep === 3 && <TourTooltip title="➕ Nơi nhập từ" content="Nhập tay từng từ hoặc dán danh sách từ Excel vào đây. Gieo mầm kiến thức bắt đầu từ bước này!" onNext={() => { setTutorialStep(4); }} position="bottom" align="right" />}
                                 </div>
                                 {addMode === 'single' ? (
                                     <form onSubmit={addNewWord} className="space-y-4">
@@ -914,27 +913,31 @@
                         </div>
                     )}
 
-                    <nav className={`fixed bottom-8 left-1/2 -translate-x-1/2 glass rounded-full p-2.5 flex items-center gap-2 card-shadow border-white/50 ${tutorialStep > 0 ? 'z-[50]' : 'z-40'}`}>
-                        <button 
-                            onClick={() => { 
-                                if(tutorialStep === 0) setActiveTab('dashboard'); 
-                                else if(tutorialStep === 4) { setActiveTab('dashboard'); setTutorialStep(5); }
-                            }} 
-                            className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest relative ${tutorialStep === 4 ? 'z-50 ring-4 ring-emerald-400 bg-white shadow-xl scale-105 text-emerald-500' : (activeTab === 'dashboard' ? 'nav-active' : 'text-slate-400 hover:text-emerald-500')}`}>
+                    <nav className={`fixed bottom-8 left-1/2 -translate-x-1/2 glass rounded-full p-2.5 flex items-center gap-2 card-shadow border-white/50 ${tutorialStep > 0 ? 'z-[60]' : 'z-40'}`}>
+                        <button onClick={() => { 
+                            if (tutorialStep === 4) {
+                                setTutorialStep(5);
+                                setActiveTab('dashboard');
+                            } else if(tutorialStep === 0) {
+                                setActiveTab('dashboard');
+                            }
+                        }} className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest relative ${tutorialStep === 4 ? 'ring-4 ring-emerald-400 bg-white scale-105' : ''} ${activeTab === 'dashboard' && tutorialStep !== 4 ? 'nav-active' : 'text-slate-400 hover:text-emerald-500'}`}>
                             <Icon name="Layout" size={18} /> <span>Vườn</span>
-                            {tutorialStep === 4 && <TourTooltip title="Quay lại Vườn" content="Nhấn vào đây để trở lại Vườn và bắt đầu học nhé!" hideNext={true} position="top" />}
+                            {tutorialStep === 4 && <TourTooltip title="🏡 Quay lại Vườn" content="Nhấn vào nút Vườn này để trở về và bắt đầu học từ nhé!" position="top" align="center" hideNext={true} />}
                         </button>
                         
-                        <button 
-                            onClick={() => { 
-                                if(tutorialStep === 0) setActiveTab('warehouse'); 
-                                else if(tutorialStep === 2) { setActiveTab('warehouse'); setTutorialStep(3); }
-                            }} 
-                            className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest relative ${tutorialStep === 2 ? 'z-50 ring-4 ring-emerald-400 bg-white shadow-xl scale-105 text-emerald-500' : (activeTab === 'warehouse' ? 'nav-active' : 'text-slate-400 hover:text-emerald-500')}`}>
+                        <button onClick={() => { 
+                            if (tutorialStep === 2) {
+                                setTutorialStep(3);
+                                setActiveTab('warehouse');
+                            } else if(tutorialStep === 0) {
+                                setActiveTab('warehouse');
+                            }
+                        }} className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest relative transition-transform duration-300 ${tutorialStep === 2 ? 'ring-4 ring-emerald-400 bg-white scale-105' : ''} ${activeTab === 'warehouse' && tutorialStep !== 2 ? 'nav-active' : 'text-slate-400 hover:text-emerald-500'}`}>
                             <Icon name="Book" size={18} /> <span>Kho</span>
-                            {tutorialStep === 2 && <TourTooltip title="Mở Kho" content="Hãy nhấn vào đây để xem nơi cất giữ hạt giống nhé!" hideNext={true} position="top" />}
+                            {tutorialStep === 2 && <TourTooltip title="📦 Mở Kho" content="Hãy nhấn trực tiếp vào nút Kho này để xem nơi chứa hạt giống!" position="top" align="center" hideNext={true} />}
                         </button>
-                        
+
                         <button onClick={() => { if(tutorialStep === 0) setActiveTab('leaderboard'); }} className={`flex items-center gap-2 px-8 py-4 rounded-full transition-all font-black text-xs uppercase tracking-widest ${activeTab === 'leaderboard' ? 'nav-active' : 'text-slate-400 hover:text-emerald-500'}`}><Icon name="Trophy" size={18} /> <span>Bảng</span></button>
                     </nav>
                 </div>
