@@ -524,7 +524,7 @@
                 const nextReview = new Date(word.nextReviewDate).getTime();
                 if (nextReview <= todayTimestamp && word.status !== 'mastered') return '🥀';
                 if (word.status === 'mastered') return nextReview <= todayTimestamp ? '🌲⚠️' : '🌲';
-                if (word.streak >= 4) return '🌳';
+                if (word.streak >= 3) return '🌳';
                 if (word.streak >= 1) return '🌿';
                 return '🌱';
             }, [todayTimestamp]);
@@ -598,10 +598,10 @@
                 } else {
                     if (isCorrectFeedback) {
                         const newStreak = updatedWord.streak + 1;
-                        if (newStreak >= 7 && updatedWord.status !== 'mastered') { playSound('level-up'); confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } }); }
-                        const daysToAdd = newStreak >= 7 ? 1 : (SRS_INTERVALS[newStreak - 1] || 365);
+                        if (newStreak >= 5 && updatedWord.status !== 'mastered') { playSound('level-up'); confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } }); }
+                        const daysToAdd = newStreak >= 5 ? 1 : (SRS_INTERVALS[newStreak - 1] || 365);
                         const nextDate = new Date(); nextDate.setDate(nextDate.getDate() + daysToAdd); nextDate.setHours(0, 0, 0, 0);
-                        updatedWord.streak = newStreak; updatedWord.nextReviewDate = nextDate.toISOString(); updatedWord.status = newStreak >= 7 ? 'mastered' : 'learning';
+                        updatedWord.streak = newStreak; updatedWord.nextReviewDate = nextDate.toISOString(); updatedWord.status = newStreak >= 5 ? 'mastered' : 'learning';
                     } else {
                         updatedWord.streak = 0; updatedWord.status = 'learning'; updatedWord.nextReviewDate = new Date().toISOString();
                     }
@@ -687,19 +687,19 @@
                                 <p className={`text-[11px] font-bold uppercase tracking-widest mt-1.5 ${levelInfo.color}`}>{levelInfo.title}</p>
                             </div>
                         </div>
-                        <div className={`flex gap-2 transition-all duration-300 ${tutorialStep === 1 ? 'relative z-50 ring-4 ring-emerald-400 bg-white p-2 rounded-[1.5rem] scale-105 shadow-xl' : ''}`}>
+                        <div className={`flex gap-2 transition-all duration-300 ${tutorialStep === 1 ? 'relative z-50' : ''}`}>
                              <button onClick={restartTutorial} className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-blue-500 transition-all active:scale-90 relative z-[46]" title="Bí kíp làm vườn"><Icon name="HelpCircle" size={20} /></button>
                              
                              <div className={`relative ${tutorialStep === 1 ? 'z-50' : ''}`}>
                                  {loggedInUser ? (
-                                    <button onClick={handleLogout} className={`w-10 h-10 rounded-xl glass flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-all active:scale-90`} title="Đăng xuất"><Icon name="LogOut" size={20} /></button>
+                                    <button onClick={handleLogout} className={`w-10 h-10 rounded-xl glass flex items-center justify-center transition-all active:scale-90 ${tutorialStep === 1 ? 'ring-4 ring-emerald-400 bg-white text-red-500 scale-110 shadow-xl' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`} title="Đăng xuất"><Icon name="LogOut" size={20} /></button>
                                  ) : (
-                                    <button onClick={() => { setIsSyncModalOpen(true); setLoginError(''); }} className={`w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all active:scale-90`} title="Đăng nhập"><Icon name="LogIn" size={20} /></button>
+                                    <button onClick={() => { setIsSyncModalOpen(true); setLoginError(''); }} className={`w-10 h-10 rounded-xl glass flex items-center justify-center transition-all active:scale-90 ${tutorialStep === 1 ? 'ring-4 ring-emerald-400 bg-white text-emerald-500 scale-110 shadow-xl' : 'text-slate-400 hover:text-emerald-500'}`} title="Đăng nhập"><Icon name="LogIn" size={20} /></button>
                                  )}
                                  {tutorialStep === 1 && <TourTooltip title="🔐 Lưu trữ đám mây" content="Bạn có thể đăng nhập bằng Tên vườn & Mã bảo vệ để lưu dữ liệu an toàn. Bỏ qua nếu muốn lưu trên máy." onNext={() => setTutorialStep(2)} position="bottom" align="right" />}
                              </div>
 
-                             <button onClick={exportData} className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all active:scale-90"><Icon name="DownloadCloud" size={20} /></button>
+                             <button onClick={exportData} className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-all active:scale-90 relative z-[46]"><Icon name="DownloadCloud" size={20} /></button>
                         </div>
                     </header>
 
@@ -786,7 +786,7 @@
                             <div className={`glass card-shadow rounded-[2.5rem] p-8 transition-all duration-300 ${tutorialStep === 7 ? 'relative z-50 ring-4 ring-emerald-400 bg-white border-transparent scale-[1.02]' : 'border-white/50'}`}>
                                 <div className="flex items-center justify-between mb-8 relative">
                                     <h3 className="font-extrabold text-slate-800 text-lg flex items-center gap-3"><Icon name="Trees" className="text-emerald-500" /> Khu vườn</h3>
-                                    {tutorialStep === 7 && <TourTooltip title="🌲 Cổ thụ" content="Khi bạn tưới nước đúng 7 lần liên tiếp, mầm non sẽ hóa Cổ thụ và cắm rễ thật sâu vào trí nhớ. Kết thúc Tour nhé!" onNext={finishTutorial} isLast={true} position="top" align="center" />}
+                                    {tutorialStep === 7 && <TourTooltip title="🌲 Cổ thụ" content="Khi bạn tưới nước đúng 5 lần liên tiếp, mầm non sẽ hóa Cổ thụ và cắm rễ thật sâu vào trí nhớ. Kết thúc Tour nhé!" onNext={finishTutorial} isLast={true} position="top" align="center" />}
                                     <div className="flex gap-4"><div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Tổng từ</p><p className="text-lg font-black text-slate-700 leading-none">{vocabList.length}</p></div><div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-1">Cổ thụ</p><p className="text-lg font-black text-purple-600 leading-none">{masteredCount}</p></div></div>
                                 </div>
                                 {vocabList.length === 0 ? (<div className="py-16 text-center text-slate-400 italic text-sm">Vườn rỗng, hãy thêm hạt giống!</div>) : (<div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">{vocabList.map(word => (<div key={word.id} className="aspect-square glass rounded-[1.25rem] flex items-center justify-center text-2xl hover:scale-125 transition-all cursor-help border-white/60 shadow-sm" title={word.term}>{getPlantIcon(word)}</div>))}</div>)}
