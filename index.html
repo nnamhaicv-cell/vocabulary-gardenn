@@ -590,8 +590,8 @@
 
                 if (updatedWord.status === 'mastered') {
                     if (isCorrectFeedback) {
-                        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0);
-                        updatedWord.nextReviewDate = tomorrow.toISOString();
+                        const nextDate = new Date(); nextDate.setDate(nextDate.getDate() + 3); nextDate.setHours(0, 0, 0, 0);
+                        updatedWord.nextReviewDate = nextDate.toISOString();
                     } else {
                         updatedWord.status = 'learning'; updatedWord.streak = 0; updatedWord.nextReviewDate = new Date().toISOString();
                     }
@@ -599,7 +599,8 @@
                     if (isCorrectFeedback) {
                         const newStreak = updatedWord.streak + 1;
                         if (newStreak >= 5 && updatedWord.status !== 'mastered') { playSound('level-up'); confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } }); }
-                        const daysToAdd = newStreak >= 5 ? 1 : (SRS_INTERVALS[newStreak - 1] || 365);
+                        // Cổ thụ hoặc vừa lên cổ thụ thì 3 ngày. Cây non thì luôn 1 ngày
+                        const daysToAdd = newStreak >= 5 ? 3 : 1;
                         const nextDate = new Date(); nextDate.setDate(nextDate.getDate() + daysToAdd); nextDate.setHours(0, 0, 0, 0);
                         updatedWord.streak = newStreak; updatedWord.nextReviewDate = nextDate.toISOString(); updatedWord.status = newStreak >= 5 ? 'mastered' : 'learning';
                     } else {
