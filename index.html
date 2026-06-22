@@ -19,39 +19,38 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    	import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    	import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    	import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyDqqyRq1s9Dncq0zck5Bwmca2s-LcjihMU",
-            authDomain: "vocab-25b77.firebaseapp.com",
-            projectId: "vocab-25b77",
-            storageBucket: "vocab-25b77.firebasestorage.app",
-            messagingSenderId: "16170478730",
-            appId: "1:16170478730:web:4963bc0259febe34995173"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqqyRq1s9Dncq0zck5Bwmca2s-LcjihMU",
+        authDomain: "vocab-25b77.firebaseapp.com",
+        projectId: "vocab-25b77",
+        storageBucket: "vocab-25b77.firebasestorage.app",
+        messagingSenderId: "16170478730",
+        appId: "1:16170478730:web:4963bc0259febe34995173"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'vocab-garden-github'; 
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = 'vocab-garden-github'; 
 
-        window.db = db;
-        window.auth = auth;
-        window.appId = appId;
-        window.signInWithCustomToken = signInWithCustomToken;
-        window.signInAnonymously = signInAnonymously;
-        window.onAuthStateChanged = onAuthStateChanged;
-        window.collection = collection;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-        window.deleteDoc = deleteDoc;
-        window.onSnapshot = onSnapshot;
-        window.writeBatch = writeBatch;
-    </script>
-
+    window.db = db;
+    window.auth = auth;
+    window.appId = appId;
+    window.signInWithCustomToken = signInWithCustomToken;
+    window.signInAnonymously = signInAnonymously;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.collection = collection;
+    window.doc = doc;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
+    window.deleteDoc = deleteDoc;
+    window.onSnapshot = onSnapshot;
+    window.writeBatch = writeBatch;
+</script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap');
 
