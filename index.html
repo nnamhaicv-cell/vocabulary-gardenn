@@ -17,40 +17,42 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDqqyRq1s9Dncq0zck5Bwmca2s-LcjihMU", 
-        authDomain: "vocab-25b77.firebaseapp.com",
-        projectId: "vocab-25b77",
-        storageBucket: "vocab-25b77.firebasestorage.app",
-        messagingSenderId: "16170478730",
-        appId: "1:16170478730:web:4963bc0259febe34995173"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    const appId = 'vocab-garden-github'; 
-
-    window.db = db;
-    window.auth = auth;
-    window.appId = appId;
     
-    window.signInWithCustomToken = (auth, token) => auth.signInWithCustomToken(token);
-    window.signInAnonymously = (auth) => auth.signInAnonymously();
-    window.onAuthStateChanged = (auth, callback) => auth.onAuthStateChanged(callback);
-    window.doc = (db, ...paths) => db.doc(paths.join('/'));
-    window.collection = (db, ...paths) => db.collection(paths.join('/'));
-    window.setDoc = (ref, data, options) => ref.set(data, options);
-    window.getDoc = (ref) => ref.get();
-    window.deleteDoc = (ref) => ref.delete();
-    window.onSnapshot = (ref, callback, onError) => ref.onSnapshot(callback, onError);
-    window.writeBatch = (db) => db.batch();
-</script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // CẤU HÌNH API Ở ĐÂY
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqqyRq1s9Dncq0zck5Bwmca2s-LcjihMU", 
+            authDomain: "vocab-25b77.firebaseapp.com",
+            projectId: "vocab-25b77",
+            storageBucket: "vocab-25b77.firebasestorage.app",
+            messagingSenderId: "16170478730",
+            appId: "1:16170478730:web:4963bc0259febe34995173"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const appId = 'vocab-garden-github'; 
+
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.signInWithCustomToken = (auth, token) => auth.signInWithCustomToken(token);
+        window.signInAnonymously = (auth) => auth.signInAnonymously();
+        window.onAuthStateChanged = (auth, callback) => auth.onAuthStateChanged(callback);
+        window.doc = (db, ...paths) => db.doc(paths.join('/'));
+        window.collection = (db, ...paths) => db.collection(paths.join('/'));
+        window.setDoc = (ref, data, options) => ref.set(data, options);
+        window.getDoc = (ref) => ref.get();
+        window.deleteDoc = (ref) => ref.delete();
+        window.onSnapshot = (ref, callback, onError) => ref.onSnapshot(callback, onError);
+        window.writeBatch = (db) => db.batch();
+    </script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap');
 
@@ -380,9 +382,7 @@
             useEffect(() => {
                 const initAuth = async () => {
                     try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await window.signInWithCustomToken(window.auth, __initial_auth_token);
-                        } else {
+                        if (typeof window.signInAnonymously === 'function') {
                             await window.signInAnonymously(window.auth);
                         }
                     } catch (err) {
@@ -390,8 +390,10 @@
                     }
                 };
                 initAuth();
-                const unsubscribe = window.onAuthStateChanged(window.auth, setUser);
-                return () => unsubscribe();
+                if (window.auth && window.onAuthStateChanged) {
+                    const unsubscribe = window.onAuthStateChanged(window.auth, setUser);
+                    return () => unsubscribe();
+                }
             }, []);
 
             useEffect(() => {
@@ -407,7 +409,7 @@
                 if (loggedInUser) {
                     const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'gardens', loggedInUser);
                     unsubVocab = window.onSnapshot(docRef, (docSnap) => {
-                        if (docSnap.exists()) {
+                        if (docSnap.exists) {
                             const data = docSnap.data();
                             if (data.vocab) setVocabList(data.vocab);
                             if (data.history) setPracticeHistory(data.history);
@@ -419,7 +421,7 @@
                 } else {
                     const historyRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'history');
                     unsubHistory = window.onSnapshot(historyRef, (docSnap) => {
-                        if (docSnap.exists()) {
+                        if (docSnap.exists) {
                             const data = docSnap.data();
                             setPracticeHistory(data.history || {});
                             if (data.gardenerName) setGardenerName(data.gardenerName);
@@ -482,7 +484,7 @@
                 const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'gardens', safeName);
                 try {
                     const snap = await window.getDoc(docRef);
-                    if (snap.exists()) {
+                    if (snap.exists) {
                         if (snap.data().key === loginKey) {
                             setLoggedInUser(safeName); localStorage.setItem('garden_username', safeName); setIsSyncModalOpen(false);
                         } else {
